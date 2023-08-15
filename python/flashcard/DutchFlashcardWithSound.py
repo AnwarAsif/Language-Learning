@@ -1,3 +1,5 @@
+# DutchFlashcardWithSoundPygame.py
+
 import os
 import csv
 import tkinter as tk
@@ -19,9 +21,8 @@ def load_flashcards():
 
         with open(csv_path, newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
-            primary_key = reader.fieldnames[0]
             for row in reader:
-                flashcard_set[row[primary_key]] = row
+                flashcard_set[row['word']] = row
 
         key = os.path.splitext(file_name)[0]
         flashcard_sets[key] = flashcard_set
@@ -32,6 +33,7 @@ def play_sound(word):
     try:
         tts = gTTS(text=word, lang='nl')  # 'nl' is the language code for Dutch
         tts.save("temp_audio.mp3")
+        pygame.mixer.init()
         pygame.mixer.music.load("temp_audio.mp3")
         pygame.mixer.music.play()
         while pygame.mixer.music.get_busy():
@@ -41,7 +43,6 @@ def play_sound(word):
         print(f"Error playing sound: {e}")
 
 def create_flashcard_app():
-    pygame.mixer.init()
     flashcard_sets = load_flashcards()
     flashcard_set_names = list(flashcard_sets.keys())
     flashcards = flashcard_sets[flashcard_set_names[0]]
@@ -51,13 +52,20 @@ def create_flashcard_app():
         flashcard_button.config(text=word)
         details_text.config(state='normal')
         details_text.delete(1.0, tk.END)
-
-        # Display all details dynamically based on available columns
-        for key, value in details.items():
-            if key != 'word':
-                details_text.insert(tk.END, f"{key.capitalize()}: {value}\n")
         
+        english = details.get('english', 'N/A')
+        word_type = details.get('type', 'N/A')
+        example = details.get('example', 'N/A')
+        
+        verb_forms = ''
+        if word_type == 'verb':
+            verb_forms = f"Present: {details.get('present', 'N/A')}\nPast: {details.get('past', 'N/A')}\nFuture: {details.get('future', 'N/A')}"
+
+        details_text.insert(tk.END, f"English: {english}\nType: {word_type}\nExample: {example}\n{verb_forms}")
         details_text.config(state='disabled')
+
+        sound_button = tk.Button(root, text="🔊", command=lambda: play_sound(word))
+        sound_button.pack(pady=5)
 
     def choose_flashcard_set(event):
         nonlocal flashcards
@@ -65,18 +73,15 @@ def create_flashcard_app():
         flashcards = flashcard_sets[chosen_set]
 
     root = tk.Tk()
-    root.title("Dutch Flashcard Application with Sound (gTTS and Pygame)")
+    root.title("Dutch Flashcard Application with Sound (Pygame)")
 
     flashcard_set_var = tk.StringVar(root)
-    flashcard_set_var.set(flashcard_set_names[0])
+    flashcard_set_var.set(flashcard_set_names[0])  # default value
     flashcard_set_menu = tk.OptionMenu(root, flashcard_set_var, *flashcard_set_names, command=choose_flashcard_set)
     flashcard_set_menu.pack()
 
     flashcard_button = tk.Button(root, text="Click for a flashcard", command=choose_flashcard)
     flashcard_button.pack(fill=tk.BOTH, expand=True)
-
-    sound_button = tk.Button(root, text="Play Sound", command=lambda: play_sound(flashcard_button.cget("text")))
-    sound_button.pack(fill=tk.BOTH, expand=True)
 
     details_text = tk.Text(root, height=4, state='disabled')
     details_text.pack(fill=tk.BOTH, expand=True)

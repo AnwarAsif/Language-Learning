@@ -1,186 +1,117 @@
+import os
+import csv
 import tkinter as tk
-from random import choice
+from random import choice, shuffle
 
-# Dutch word dictionary as provided before
-dutch_word_dict = dutch_flashcards = {
-    "Hallo daar": {
-        "meaning": "A greeting, similar to 'hello there'",
-        "example": "Hallo daar! Hoe gaat het met je?",
-        "translation": "Hello there! How are you?",
-        "type": "phrase"
-    },
-    "Intellectuele dorst": {
-        "meaning": "Intellectual thirst or desire for knowledge",
-        "example": "Hij heeft een grote intellectuele dorst.",
-        "translation": "He has a great intellectual thirst.",
-        "type": "noun"
-    },
-    "Noem maar op": {
-        "meaning": "And so forth, and so on",
-        "example": "Appels, peren, bananen, noem maar op.",
-        "translation": "Apples, pears, bananas, and so on.",
-        "type": "phrase"
-    },
-    "Muziek is mijn medicijn": {
-        "meaning": "Music is my medicine or music is my cure",
-        "example": "Als ik me slecht voel, muziek is mijn medicijn.",
-        "translation": "When I'm feeling down, music is my medicine.",
-        "type": "phrase"
-    },
-    "Foodie in hart en nieren": {
-        "meaning": "A real food lover or enthusiast",
-        "example": "Ze is een foodie in hart en nieren.",
-        "translation": "She's a foodie through and through.",
-        "type": "phrase"
-    },
-    "Kers op de taart": {
-        "meaning": "The icing on the cake, something that makes a good situation even better",
-        "example": "Dat was echt de kers op de taart!",
-        "translation": "That was really the icing on the cake!",
-        "type": "phrase"
-    },
-    "Je ne sais quoi": {
-        "meaning": "An indescribable quality that makes something distinctive or attractive",
-        "example": "Ze heeft een bepaalde je ne sais quoi.",
-        "translation": "She has a certain je ne sais quoi.",
-        "type": "phrase"
-    }
-}
+CARD_DIR = 'cards'
+COMPLETION_FILE = 'completion.csv'
 
+def load_flashcards():
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    cards_dir = os.path.join(script_dir, CARD_DIR)
 
-# Dutch verb dictionary as provided before
-dutch_verb_dict = dutch_verb_dict = {
-    "ben": {  #zijn (to be)
-        "infinitive": "zijn",
-        "present": "ben",
-        "past": "was",
-        "perfect": "is geweest"
-    },
-    "woon": {  #wonen (to live)
-        "infinitive": "wonen",
-        "present": "woon",
-        "past": "woonde",
-        "perfect": "heeft gewoond"
-    },
-    "werk": {  #werken (to work)
-        "infinitive": "werken",
-        "present": "werk",
-        "past": "werkte",
-        "perfect": "heeft gewerkt"
-    },
-    "geniet": {  #genieten (to enjoy)
-        "infinitive": "genieten",
-        "present": "geniet",
-        "past": "genoot",
-        "perfect": "heeft genoten"
-    },
-    "probeer": {  #proberen (to try)
-        "infinitive": "proberen",
-        "present": "probeer",
-        "past": "probeerde",
-        "perfect": "heeft geprobeerd"
-    },
-    "ontwikkel": {  #ontwikkelen (to develop)
-        "infinitive": "ontwikkelen",
-        "present": "ontwikkel",
-        "past": "ontwikkelde",
-        "perfect": "heeft ontwikkeld"
-    },
-    "doe": {  #doen (to do)
-        "infinitive": "doen",
-        "present": "doe",
-        "past": "deed",
-        "perfect": "heeft gedaan"
-    },
-    "zing": {  #zingen (to sing)
-        "infinitive": "zingen",
-        "present": "zing",
-        "past": "zong",
-        "perfect": "heeft gezongen"
-    },
-    "speel": {  #spelen (to play)
-        "infinitive": "spelen",
-        "present": "speel",
-        "past": "speelde",
-        "perfect": "heeft gespeeld"
-    },
-    "maak": {  #maken (to make)
-        "infinitive": "maken",
-        "present": "maak",
-        "past": "maakte",
-        "perfect": "heeft gemaakt"
-    },
-    "sta": {  #staan (to stand)
-        "infinitive": "staan",
-        "present": "sta",
-        "past": "stond",
-        "perfect": "heeft gestaan"
-    },
-    "leef": {  #leven (to live)
-        "infinitive": "leven",
-        "present": "leef",
-        "past": "leefde",
-        "perfect": "heeft geleefd"
-    },
-    "ga": {  #gaan (to go)
-        "infinitive": "gaan",
-        "present": "ga",
-        "past": "ging",
-        "perfect": "is gegaan"
-    },
-    "neem": {  #nemen (to take)
-        "infinitive": "nemen",
-        "present": "neem",
-        "past": "nam",
-        "perfect": "heeft genomen"
-    },
-}
+    flashcard_sets = {}
+    for file_name in os.listdir(cards_dir):
+        if not file_name.endswith('.csv'):
+            continue
 
-# Combine both dictionaries
-# Combine dictionaries in a way that integrates verb forms into the general words dictionary
-flashcards = {**dutch_word_dict}
-for verb, details in dutch_verb_dict.items():
-    if verb in flashcards:
-        flashcards[verb].update(details)
-    else:
-        flashcards[verb] = details
+        csv_path = os.path.join(cards_dir, file_name)
+        flashcard_set = []
 
-# Function to select a random flashcard
-def choose_flashcard():
-    word, details = choice(list(flashcards.items()))
-    flashcard_button.config(text=word)
-    details_text.config(state='normal')
-    details_text.delete(1.0, tk.END)
-    
-    # Check if keys exist before accessing
-    english = details.get('english', 'N/A')
-    word_type = details.get('type', 'N/A')
-    example = details.get('example', 'N/A')
+        with open(csv_path, newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                flashcard_set.append(row)
 
-    # If the word is a verb, also display verb forms
-    verb_forms = ''
-    if word_type == 'verb':
-        verb_forms = f"Present: {details.get('present', 'N/A')}\nPast: {details.get('past', 'N/A')}\nFuture: {details.get('future', 'N/A')}"
+        key = os.path.splitext(file_name)[0]
+        flashcard_sets[key] = flashcard_set
 
-    details_text.insert(tk.END, f"English: {english}\nType: {word_type}\nExample: {example}\n{verb_forms}")
-    details_text.config(state='disabled')
+    return flashcard_sets
 
+def load_completion():
+    if not os.path.exists(COMPLETION_FILE):
+        create_completion_file()
+    with open(COMPLETION_FILE, 'r', newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        completion_data = {row['card_set']: int(row['completed']) for row in reader}
+    return completion_data
 
+def create_completion_file():
+    flashcard_sets = load_flashcards()
+    with open(COMPLETION_FILE, 'w', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=['card_set', 'completed', 'total'])
+        writer.writeheader()
+        for card_set, cards in flashcard_sets.items():
+            writer.writerow({'card_set': card_set, 'completed': 0, 'total': len(cards)})
 
-# Function to create a flashcard application window
-def create_flashcard_app():
-    global flashcard_button, details_text
+def update_completion_data(card_set_name, new_completed):
+    completion_data = load_completion()
+    completion_data[card_set_name] = new_completed
+    with open(COMPLETION_FILE, 'w', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=['card_set', 'completed', 'total'])
+        writer.writeheader()
+        for card_set, completed in completion_data.items():
+            total_cards = len(load_flashcards()[card_set])
+            writer.writerow({'card_set': card_set, 'completed': completed, 'total': total_cards})
 
-    root = tk.Tk()
-    root.title("Dutch Flashcard Application")
+class FlashcardApp:
+    def __init__(self):
+        self.flashcards = load_flashcards()
+        self.current_set = None
+        self.current_card = None
+        self.cards = []
 
-    flashcard_button = tk.Button(root, text="Click for a flashcard", command=choose_flashcard)
-    flashcard_button.pack(fill=tk.BOTH, expand=True)
+        self.root = tk.Tk()
+        self.root.title("Dutch Flashcard Application")
 
-    details_text = tk.Text(root, height=4, state='disabled')
-    details_text.pack(fill=tk.BOTH, expand=True)
+        self.flashcard_button = tk.Button(self.root, text="Click for a flashcard", command=self.choose_flashcard)
+        self.flashcard_button.pack(fill=tk.BOTH, expand=True)
 
-    root.mainloop()
+        self.details_text = tk.Text(self.root, height=4, state='disabled')
+        self.details_text.pack(fill=tk.BOTH, expand=True)
+
+        self.understand_button = tk.Button(self.root, text="Got It!", command=self.mark_understood)
+        self.understand_button.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        self.practice_button = tk.Button(self.root, text="Practice More", command=self.mark_practice)
+        self.practice_button.pack(side=tk.RIGHT, fill=tk.X, expand=True)
+
+        self.choose_flashcard_set()
+
+    def choose_flashcard_set(self):
+        self.flashcard_set_var = tk.StringVar(self.root)
+        self.flashcard_set_var.set(list(self.flashcards.keys())[0])
+        self.flashcard_set_menu = tk.OptionMenu(self.root, self.flashcard_set_var, *self.flashcards.keys(), command=self.load_flashcard_set)
+        self.flashcard_set_menu.pack()
+
+    def load_flashcard_set(self, event=None):
+        self.current_set = self.flashcard_set_var.get()
+        self.cards = shuffle(self.flashcards[self.current_set].copy())
+        self.choose_flashcard()
+
+    def choose_flashcard(self):
+        if not self.cards:
+            return  # End of the set
+        self.current_card = self.cards.pop()
+        self.flashcard_button.config(text=self.current_card['word'])
+        self.details_text.config(state='normal')
+        self.details_text.delete(1.0, tk.END)
+        self.details_text.config(state='disabled')
+
+    def mark_understood(self):
+        completion_data = load_completion()
+        completion_data[self.current_set] += 1
+        update_completion_data(self.current_set, completion_data[self.current_set])
+        self.choose_flashcard()
+
+    def mark_practice(self):
+        if self.current_card:
+            self.cards.insert(0, self.current_card)  # Add back to the front of the queue
+            self.choose_flashcard()
+
+    def run(self):
+        self.root.mainloop()
 
 if __name__ == "__main__":
-    create_flashcard_app()
+    app = FlashcardApp()
+    app.run()

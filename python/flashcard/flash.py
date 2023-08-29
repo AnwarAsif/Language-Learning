@@ -5,6 +5,8 @@ from random import choice
 from gtts import gTTS
 import pygame
 
+# 
+
 def load_flashcards():
     script_dir = os.path.dirname(os.path.realpath(__file__))
     cards_dir = os.path.join(script_dir, 'cards')
